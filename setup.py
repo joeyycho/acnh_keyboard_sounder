@@ -1,14 +1,14 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-    name="AC_Keyboard_Sounder",  
-    version="0.1.0",
+    name="AC_Keyboard_Sounder",
+    version="0.2.0",
     author="joeyycho",
     author_email="joeyycho@icloud.com",
-    description="Animal Crossing keyboard sounder for MacOS",
+    description="Animal Crossing keyboard sounder for macOS and Windows",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    packages=find_packages(),
+    py_modules=["main"],
     include_package_data=True,
     install_requires=[
         "pygame>=2.0.0",
@@ -17,11 +17,12 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
     ],
-    python_requires='>=3.8',
+    python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "keyboard-sound=main:main"
+            "keyboard-sound=main:main",
         ],
     },
 )

@@ -1,0 +1,89 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            artifact: KeyboardSounder-macos
+            upload_path: dist/KeyboardSounder-macos.zip
+          - os: windows-latest
+            artifact: KeyboardSounder-windows
+            upload_path: dist/KeyboardSounder-windows.zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt
+
+      - name: Build with PyInstaller
+        run: python -m PyInstaller --noconfirm --clean KeyboardSounder.spec
+
+      - name: Package artifact (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          test -d dist/KeyboardSounder.app
+          ditto -c -k --sequesterRsrc --keepParent dist/KeyboardSounder.app \
+            dist/KeyboardSounder-macos.zip
+          ls -la dist/
+
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path dist/KeyboardSounder.exe)) { throw "KeyboardSounder.exe missing" }
+          Compress-Archive -Path dist/KeyboardSounder.exe -DestinationPath dist/KeyboardSounder-windows.zip
+          Get-ChildItem dist
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.upload_path }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Flatten release assets
+        run: |
+          mkdir -p upload
+          find release-assets -type f -name '*.zip' -exec cp {} upload/ \;
+          ls -la upload/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: upload/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
