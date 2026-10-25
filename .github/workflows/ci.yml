@@ -31,6 +31,9 @@ jobs:
       - name: Syntax check
         run: python -m py_compile main.py
 
+      - name: Check Windows-safe sound filenames
+        run: python scripts/check_sound_filenames.py
+
       - name: PyInstaller smoke build
         run: python -m PyInstaller --noconfirm --clean KeyboardSounder.spec
 
