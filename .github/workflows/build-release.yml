@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt
 
+      - name: Check Windows-safe sound filenames
+        run: python scripts/check_sound_filenames.py
+
       - name: Build with PyInstaller
         run: python -m PyInstaller --noconfirm --clean KeyboardSounder.spec
 
